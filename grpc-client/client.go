@@ -6,6 +6,7 @@ import (
 	"time"
 
 	mainapipb "grpcclient/proto/gen"
+	farewellpb "grpcclient/proto/gen/farewell"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -20,6 +21,9 @@ func main() {
 	defer conn.Close()
 
 	client := mainapipb.NewCalculatorClient(conn)
+	// client2 := mainapipb.NewGreeterClient(conn)
+	fwClient := farewellpb.NewAufWiedersehenClient(conn)
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -32,6 +36,25 @@ func main() {
 		log.Fatalln("could not add", err)
 	}
 
+	// reqGreet := mainapipb.HelloRequest{
+	// 	Name: "Sanket",
+	// }
+	// res1, err := client2.Greet(ctx, &reqGreet)
+	// if err != nil {
+	// 	log.Fatalln("could not greet", err)
+	// }
+	reqGoodBye := &farewellpb.GoodByeRequest{
+		Name: "sanket",
+	}
+	resFw, err := fwClient.BidGoodBye(ctx, reqGoodBye)
+	if err != nil {
+		log.Fatalln("Could not bid Goodbye", err)
+	}
+
 	log.Println("Sum:", res.Sum)
+	// log.Println("Sum:", res1.Message)
+	log.Println("Goodbye message:", resFw.Message)
+	state := conn.GetState()
+	log.Println("Connection State:", state)
 
 }
