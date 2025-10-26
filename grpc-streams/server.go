@@ -40,6 +40,7 @@ func main() {
 	grpcServe := grpc.NewServer()
 	mainpb.RegisterCalculatorServer(grpcServe, &server{})
 
+	log.Println("server is running on port 50051")
 	err = grpcServe.Serve(lis)
 	if err != nil {
 		log.Fatal(err)
