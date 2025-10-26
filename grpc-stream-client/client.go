@@ -5,6 +5,7 @@ import (
 	mainpb "grpcstreamsclient/proto/gen"
 	"io"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -40,5 +41,25 @@ func main() {
 		}
 		log.Println("Fibonacci number: ", resp.GetNumber())
 	}
+
+	stream1, err := client.SendNumber(ctx)
+	if err != nil {
+		log.Fatalln("Error creating stream:", err)
+	}
+
+	for num := range 9 {
+		log.Println("Sending:", num)
+		err := stream1.Send(&mainpb.NumberRequest{Number: int32(num)})
+		if err != nil {
+			log.Fatalln("Error sending number:", err)
+		}
+		time.Sleep(time.Second)
+	}
+
+	res, err := stream1.CloseAndRecv()
+	if err != nil {
+		log.Fatalln("Error receiving response:", err)
+	}
+	log.Println("SUM:", res.Sum)
 
 }
