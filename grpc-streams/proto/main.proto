@@ -23,5 +23,5 @@ message FibonacciRequest {
 }
 
 message FibonacciResponse {
-    int32 number = 1
+    int32 number = 1;
 }
