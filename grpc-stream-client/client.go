@@ -62,4 +62,41 @@ func main() {
 	}
 	log.Println("SUM:", res.Sum)
 
+	chatStream, err := client.Chat(ctx)
+	if err != nil {
+		log.Fatalln("Error creating chat stream:", err)
+	}
+
+	waitc := make(chan struct{})
+
+	// sending message
+	go func() {
+		message := []string{"hello", "how are you?", "goodby"}
+		for _, message := range message {
+			err := chatStream.Send(&mainpb.ChatMessage{Message: message})
+			if err != nil {
+				log.Fatalln(err)
+			}
+			time.Sleep(time.Second)
+		}
+		chatStream.CloseSend()
+	}()
+
+	// reveive messages in goroutine
+	go func() {
+		for {
+			res, err := chatStream.Recv()
+			if err == io.EOF {
+				log.Println("End of stream")
+				break
+			}
+			if err != nil {
+				log.Fatal("Error receiving message", err)
+			}
+			log.Println("Received response: ", res.GetMessage())
+		}
+		close(waitc)
+	}()
+	<-waitc
+
 }

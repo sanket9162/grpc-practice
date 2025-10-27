@@ -22,6 +22,7 @@ const (
 	Calculator_Add_FullMethodName               = "/calculator.Calculator/Add"
 	Calculator_GenerateFibonacci_FullMethodName = "/calculator.Calculator/GenerateFibonacci"
 	Calculator_SendNumber_FullMethodName        = "/calculator.Calculator/SendNumber"
+	Calculator_Chat_FullMethodName              = "/calculator.Calculator/Chat"
 )
 
 // CalculatorClient is the client API for Calculator service.
@@ -31,6 +32,7 @@ type CalculatorClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	GenerateFibonacci(ctx context.Context, in *FibonacciRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[FibonacciResponse], error)
 	SendNumber(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[NumberRequest, NumberResponse], error)
+	Chat(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ChatMessage, ChatMessage], error)
 }
 
 type calculatorClient struct {
@@ -83,6 +85,19 @@ func (c *calculatorClient) SendNumber(ctx context.Context, opts ...grpc.CallOpti
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type Calculator_SendNumberClient = grpc.ClientStreamingClient[NumberRequest, NumberResponse]
 
+func (c *calculatorClient) Chat(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ChatMessage, ChatMessage], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &Calculator_ServiceDesc.Streams[2], Calculator_Chat_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[ChatMessage, ChatMessage]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Calculator_ChatClient = grpc.BidiStreamingClient[ChatMessage, ChatMessage]
+
 // CalculatorServer is the server API for Calculator service.
 // All implementations must embed UnimplementedCalculatorServer
 // for forward compatibility.
@@ -90,6 +105,7 @@ type CalculatorServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	GenerateFibonacci(*FibonacciRequest, grpc.ServerStreamingServer[FibonacciResponse]) error
 	SendNumber(grpc.ClientStreamingServer[NumberRequest, NumberResponse]) error
+	Chat(grpc.BidiStreamingServer[ChatMessage, ChatMessage]) error
 	mustEmbedUnimplementedCalculatorServer()
 }
 
@@ -108,6 +124,9 @@ func (UnimplementedCalculatorServer) GenerateFibonacci(*FibonacciRequest, grpc.S
 }
 func (UnimplementedCalculatorServer) SendNumber(grpc.ClientStreamingServer[NumberRequest, NumberResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method SendNumber not implemented")
+}
+func (UnimplementedCalculatorServer) Chat(grpc.BidiStreamingServer[ChatMessage, ChatMessage]) error {
+	return status.Errorf(codes.Unimplemented, "method Chat not implemented")
 }
 func (UnimplementedCalculatorServer) mustEmbedUnimplementedCalculatorServer() {}
 func (UnimplementedCalculatorServer) testEmbeddedByValue()                    {}
@@ -166,6 +185,13 @@ func _Calculator_SendNumber_Handler(srv interface{}, stream grpc.ServerStream) e
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type Calculator_SendNumberServer = grpc.ClientStreamingServer[NumberRequest, NumberResponse]
 
+func _Calculator_Chat_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalculatorServer).Chat(&grpc.GenericServerStream[ChatMessage, ChatMessage]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Calculator_ChatServer = grpc.BidiStreamingServer[ChatMessage, ChatMessage]
+
 // Calculator_ServiceDesc is the grpc.ServiceDesc for Calculator service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -187,6 +213,12 @@ var Calculator_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "SendNumber",
 			Handler:       _Calculator_SendNumber_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "Chat",
+			Handler:       _Calculator_Chat_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},
