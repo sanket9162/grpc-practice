@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 func main() {
@@ -31,6 +32,8 @@ func main() {
 		A: 10,
 		B: 20,
 	}
+	md := metadata.Pairs("authorization", "Bearer=ahskgnoeqhvnaodeaebhre", "test", "testing", "test2", "testing2")
+	ctx = metadata.NewOutgoingContext(ctx, md)
 	res, err := client.Add(ctx, &req)
 	if err != nil {
 		log.Fatalln("could not add", err)
