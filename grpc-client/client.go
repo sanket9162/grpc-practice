@@ -35,12 +35,15 @@ func main() {
 	md := metadata.Pairs("authorization", "Bearer=ahskgnoeqhvnaodeaebhre", "test", "testing", "test2", "testing2")
 	ctx = metadata.NewOutgoingContext(ctx, md)
 	var resHeader metadata.MD
-	res, err := client.Add(ctx, &req, grpc.Header(&resHeader))
+	var resTrailer metadata.MD
+	res, err := client.Add(ctx, &req, grpc.Header(&resHeader), grpc.Trailer(&resTrailer))
 	if err != nil {
 		log.Fatalln("could not add", err)
 	}
 	log.Println("resHeader", resHeader)
 	log.Println("resHeader[test]:", resHeader["test"])
+	log.Println("resTrailer", resTrailer)
+	log.Println("resTrailer[testTrailer]:", resTrailer)
 
 	reqGreet := mainapipb.HelloRequest{
 		Name: "Sanket",
