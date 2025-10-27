@@ -30,6 +30,13 @@ func (s *server) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, 
 		log.Println("no value wiht auth key in metadata")
 	}
 	log.Println("Authorization:", val)
+
+	// set response headers
+	responseHeaders := metadata.Pairs("test", "testvalue", "test2", "testing2")
+	err := grpc.SendHeader(ctx, responseHeaders)
+	if err != nil {
+		return nil, err
+	}
 	return &pb.AddResponse{
 		Sum: req.A + req.B,
 	}, nil
